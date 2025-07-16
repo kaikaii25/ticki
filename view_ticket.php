@@ -209,9 +209,9 @@ require_once 'includes/header.php';
     <div class="row justify-content-center">
         <div class="col-lg-8 col-md-10 mx-auto">
             <div class="card mb-4">
-                <div class="card-header bg-light text-dark py-3 border-bottom d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">Ticket #<?php echo $ticket['id']; ?> - <?php echo htmlspecialchars($ticket['title']); ?></h4>
-                    <div class="d-flex gap-2 align-items-center">
+                <div class="card-header bg-light text-dark py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap">
+                    <h4 class="mb-0 ticket-title flex-grow-1" style="min-width:0;">Ticket #<?php echo $ticket['id']; ?> - <?php echo htmlspecialchars($ticket['title']); ?></h4>
+                    <div class="d-flex gap-2 align-items-center flex-shrink-0 mt-2 mt-md-0">
                         <a href="tickets.php" class="btn btn-secondary btn-sm">Back to All Tickets</a>
                         <?php if ($ticket['created_by'] == $_SESSION['user_id'] && $ticket['status'] !== 'resolved' && $ticket['status'] !== 'closed'): ?>
                             <button id="editTicketBtn" class="btn btn-info btn-sm">Edit Ticket</button>

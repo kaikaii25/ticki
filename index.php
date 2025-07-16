@@ -41,6 +41,23 @@ $query = "SELECT t.*, u.username as created_by, d.name as assigned_department_na
           LIMIT 5";
 $recent_tickets = mysqli_query($conn, $query);
 
+// Get tickets per department (for admin dashboard)
+$tickets_per_department = [];
+if (isAdmin()) {
+    $dept_query = "SELECT d.name, COUNT(t.id) as count FROM departments d LEFT JOIN tickets t ON d.id = t.department_id GROUP BY d.id ORDER BY d.name";
+    $dept_result = mysqli_query($conn, $dept_query);
+    while ($row = mysqli_fetch_assoc($dept_result)) {
+        $tickets_per_department[$row['name']] = (int)$row['count'];
+    }
+    // Get tickets by priority
+    $priority_query = "SELECT priority, COUNT(*) as count FROM tickets GROUP BY priority";
+    $priority_result = mysqli_query($conn, $priority_query);
+    $tickets_by_priority = ['low' => 0, 'medium' => 0, 'high' => 0];
+    while ($row = mysqli_fetch_assoc($priority_result)) {
+        $tickets_by_priority[$row['priority']] = (int)$row['count'];
+    }
+}
+
 require_once 'includes/header.php';
 
 displayNotification();

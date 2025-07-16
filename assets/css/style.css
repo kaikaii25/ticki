@@ -78,6 +78,12 @@ h1, h2, h3, h4, h5, h6 {
     background: rgba(13, 110, 253, 0.1);
 }
 
+/* ===== NAVBAR Z-INDEX FIX ===== */
+.navbar, .dropdown-menu {
+    z-index: 1060 !important;
+    position: relative;
+}
+
 /* ===== CARDS ===== */
 .card {
     border: none;
@@ -503,6 +509,28 @@ h1, h2, h3, h4, h5, h6 {
 .faq-question.active + .faq-answer {
     max-height: 300px;
     padding-top: 1rem;
+}
+
+/* ===== FAQ CONTAINER Z-INDEX & OVERFLOW FIX ===== */
+.accordion, .accordion-item, .faq-container {
+    z-index: 1 !important;
+    position: relative;
+    overflow: visible !important;
+}
+
+/* Truncate long ticket titles in the ticket header */
+.ticket-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .ticket-title {
+    font-size: 1.1rem;
+  }
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
