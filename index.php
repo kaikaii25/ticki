@@ -10,6 +10,7 @@
 </head>
 <body>
 <?php
+// IMPORTANT: Use HTTPS in production. Configure error reporting in php.ini for production (display_errors=Off, log_errors=On).
 require_once 'includes/functions.php';
 
 if (!isLoggedIn()) {

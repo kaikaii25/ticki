@@ -1,4 +1,5 @@
 <?php
+// For cloud scaling: Use Redis/Memcached for session storage if using multiple servers.
 session_start();
 require_once __DIR__ . '/../config/database.php';
 

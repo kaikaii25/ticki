@@ -22,11 +22,20 @@ $priority = isset($_GET['priority']) ? sanitize($_GET['priority']) : '';
 $search = isset($_GET['search']) ? sanitize($_GET['search']) : '';
 $department = isset($_GET['department']) ? sanitize($_GET['department']) : '';
 
+// Default: show only tickets for user's department unless 'show_all' is set
+$show_all = isset($_GET['show_all']) && $_GET['show_all'] === '1';
+$user_department_id = isset($_SESSION['department_id']) ? $_SESSION['department_id'] : '';
+
 // Fetch all departments for filter dropdown
 $departments = [];
 $dept_result = mysqli_query($conn, "SELECT id, name FROM departments ORDER BY name");
 while ($row = mysqli_fetch_assoc($dept_result)) {
     $departments[] = $row;
+}
+
+// If no department filter is set in the URL, default to user's department
+if (!isset($_GET['department']) && $user_department_id) {
+    $department = $user_department_id;
 }
 
 // Build query - updated to include assigned_department_id
@@ -60,7 +69,6 @@ if ($search) {
 if ($department) {
     $query .= " AND t.assigned_department_id = '$department'";
 }
-
 // Add sorting
 $query .= " ORDER BY t.created_at DESC";
 
@@ -170,6 +178,7 @@ if (searchInput) {
                                     </span>
                                 </div>
                             </div>
+                            <!-- Removed Show All Tickets button -->
                             <div class="col-lg-2 col-md-6">
                                 <a href="tickets.php" class="btn btn-outline-secondary w-100">
                                     <i class="fas fa-undo me-1"></i>Reset

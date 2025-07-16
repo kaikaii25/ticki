@@ -46,22 +46,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Title and description are required';
     } else {
         if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
-            $upload_dir = 'uploads/';
+            $upload_dir = getenv('UPLOAD_PATH') ?: 'uploads/';
             if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
             $filename = uniqid() . '_' . basename($_FILES['attachment']['name']);
             $target_path = $upload_dir . $filename;
-            if (move_uploaded_file($_FILES['attachment']['tmp_name'], $target_path)) {
+            $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+            $max_size = 5 * 1024 * 1024; // 5MB
+            if (!in_array($_FILES['attachment']['type'], $allowed_types)) {
+                $error = 'Only JPG, PNG, GIF images and PDF files are allowed.';
+            } elseif ($_FILES['attachment']['size'] > $max_size) {
+                $error = 'File size must be less than 5MB.';
+            } elseif (move_uploaded_file($_FILES['attachment']['tmp_name'], $target_path)) {
                 $attachment_path = $target_path;
             }
         }
-        $query = "INSERT INTO tickets (title, description, priority, created_by, department_id, assigned_department_id) 
-                  VALUES ('$title', '$description', '$priority', $created_by, $department_id, $assigned_department_id)";
-        
-        if (mysqli_query($conn, $query)) {
-            setNotification('Ticket created successfully!', 'success');
-            redirect('tickets.php');
+        if (!empty($error)) {
+            // Do not proceed if upload error
         } else {
-            $error = 'Failed to create ticket. Please try again.';
+            $query = "INSERT INTO tickets (title, description, priority, created_by, department_id, assigned_department_id, attachment) 
+                      VALUES ('$title', '$description', '$priority', $created_by, $department_id, $assigned_department_id, '$attachment_path')";
+            if (mysqli_query($conn, $query)) {
+                setNotification('Ticket created successfully!', 'success');
+                redirect('tickets.php');
+            } else {
+                $error = 'Failed to create ticket. Please try again.';
+            }
         }
     }
 }

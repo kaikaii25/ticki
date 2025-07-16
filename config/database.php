@@ -1,21 +1,20 @@
 <?php
-define('DB_SERVER', 'localhost');
-define('DB_USERNAME', 'root');
-define('DB_PASSWORD', '');
-define('DB_NAME', 'nissan_tickets');
+// Cloud-ready database config using environment variables
+$DB_HOST = getenv('DB_HOST') ?: 'localhost';
+$DB_USER = getenv('DB_USER') ?: 'root';
+$DB_PASS = getenv('DB_PASS') ?: '';
+$DB_NAME = getenv('DB_NAME') ?: 'nissan_tickets';
 
-// Attempt to connect to MySQL database
-$conn = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD);
-
-// Check connection
+$conn = mysqli_connect($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
 if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
+    die('Database connection failed: ' . mysqli_connect_error());
 }
+// For cloud: set DB_HOST, DB_USER, DB_PASS, DB_NAME in your environment or .env file
 
 // Create database if it doesn't exist
-$sql = "CREATE DATABASE IF NOT EXISTS " . DB_NAME;
+$sql = "CREATE DATABASE IF NOT EXISTS " . $DB_NAME;
 if (mysqli_query($conn, $sql)) {
-    mysqli_select_db($conn, DB_NAME);
+    mysqli_select_db($conn, $DB_NAME);
 } else {
     die("Error creating database: " . mysqli_error($conn));
 }

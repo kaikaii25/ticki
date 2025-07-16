@@ -80,3 +80,12 @@ Feel free to submit issues and enhancement requests!
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details. 
+
+## Cloud Deployment
+
+1. Set up your environment variables (see .env.example).
+2. Use a secure MySQL user and password.
+3. Set UPLOAD_PATH to a persistent or cloud storage location.
+4. Use HTTPS in production.
+5. Disable display_errors and enable error logging in php.ini for production.
+6. For scaling, use a shared session store (Redis, Memcached) if needed. 

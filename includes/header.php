@@ -9,6 +9,8 @@ if (
 ) {
     redirect('login.php');
 }
+
+// Revert header/navbar to before notification bell feature
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -77,5 +79,7 @@ if (
     </nav>
     <div class="container mt-4">
     <!-- JS includes moved to footer -->
+    <script>
+    </script>
 </body>
 </html> 

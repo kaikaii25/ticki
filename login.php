@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = sanitize($_POST['username']);
     $password = $_POST['password'];
 
-    $query = "SELECT id, username, password, role FROM users WHERE username = '$username'";
+    $query = "SELECT id, username, password, role, department_id FROM users WHERE username = '$username'";
     $result = mysqli_query($conn, $query);
 
     if ($result && mysqli_num_rows($result) === 1) {
@@ -20,6 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role'] = $user['role'];
+            $_SESSION['department_id'] = $user['department_id'];
+            $_SESSION['last_seen_tickets'] = date('Y-m-d H:i:s');
             unset($_SESSION['message']); // Clear registration message after login
             setNotification('Login successful!', 'success');
             redirect('index.php');

@@ -29,8 +29,10 @@ $result = mysqli_query($conn, $query);
 $ticket = mysqli_fetch_assoc($result);
 
 if (!$ticket) {
-    $_SESSION['message'] = displayError('Ticket not found.');
-    redirect('tickets.php');
+    require_once 'includes/header.php';
+    echo "<div class='container mt-5'><div class='alert alert-danger'>Ticket not found or has been deleted.</div></div>";
+    require_once 'includes/footer.php';
+    exit;
 }
 
 $error = '';
@@ -202,6 +204,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ticket'])) {
     }
 }
 
+// Handle ticket reassignment (for all users)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reassign_ticket'])) {
+    $new_assigned_department_id = !empty($_POST['new_assigned_department_id']) ? sanitize($_POST['new_assigned_department_id']) : 'NULL';
+    if ($new_assigned_department_id !== 'NULL' && $new_assigned_department_id != $ticket['assigned_department_id']) {
+        $query = "UPDATE tickets SET assigned_department_id = $new_assigned_department_id WHERE id = $ticket_id";
+        if (mysqli_query($conn, $query)) {
+            $_SESSION['message'] = displaySuccess('Ticket reassigned successfully.');
+            // Refresh ticket data after update
+            $query = "SELECT t.*, u.username as creator_username, d.name as assigned_department_name, d_creator.name as creator_department_name 
+                      FROM tickets t 
+                      LEFT JOIN users u ON t.created_by = u.id 
+                      LEFT JOIN departments d ON t.assigned_department_id = d.id
+                      LEFT JOIN departments d_creator ON t.department_id = d_creator.id
+                      WHERE t.id = $ticket_id";
+            $result = mysqli_query($conn, $query);
+            $ticket = mysqli_fetch_assoc($result);
+        } else {
+            $_SESSION['message'] = displayError('Failed to reassign ticket: ' . mysqli_error($conn));
+        }
+    } else {
+        $_SESSION['message'] = displayError('Please select a different department to reassign.');
+    }
+    redirect('view_ticket.php?id=' . $ticket_id);
+}
+
 require_once 'includes/header.php';
 ?>
 
@@ -299,7 +326,7 @@ require_once 'includes/header.php';
                         <?php endif; ?>
                         <div class="text-muted">
                             <small>
-                                <strong>Created by:</strong> <?php echo htmlspecialchars($ticket['creator_username']); ?> (Department: <?php echo htmlspecialchars($ticket['creator_department_name'] ?? 'N/A'); ?>)<br>
+                                <strong>Created by:</strong> <?php echo htmlspecialchars($ticket['creator_username'] ?? 'N/A'); ?> (Department: <?php echo htmlspecialchars($ticket['creator_department_name'] ?? 'N/A'); ?>)<br>
                                 <strong>Created on:</strong> <?php echo date('M d, Y h:i A', strtotime($ticket['created_at'])); ?>
                             </small>
                         </div>
@@ -379,6 +406,30 @@ require_once 'includes/header.php';
                         <button type="submit" name="update_status" class="btn btn-primary w-100">Update Status</button>
                     </form>
 
+                    <!-- Reassign Ticket Form (only for assigned department or admin) -->
+                    <?php 
+                    // Permission to reassign: only admin or user from assigned department
+                    $can_reassign = isAdmin() || (isset($_SESSION['department_id']) && $_SESSION['department_id'] == $ticket['assigned_department_id']);
+                    ?>
+                    <?php if ($can_reassign): ?>
+                    <form method="POST" action="" class="mb-4">
+                        <div class="mb-3">
+                            <label for="new_assigned_department_id" class="form-label">Reassign Ticket to Department</label>
+                            <select class="form-select" id="new_assigned_department_id" name="new_assigned_department_id" required>
+                                <option value="">Select Department</option>
+                                <?php foreach ($all_departments as $dept): ?>
+                                    <?php if ($ticket['assigned_department_id'] != $dept['id']): ?>
+                                        <option value="<?php echo $dept['id']; ?>">
+                                            <?php echo htmlspecialchars($dept['name']); ?>
+                                        </option>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <button type="submit" name="reassign_ticket" class="btn btn-warning w-100">Reassign Ticket</button>
+                    </form>
+                    <?php endif; ?>
+
                     <?php if (isAdmin()): ?>
                         <!-- Assign Ticket to Department Form -->
                         <form method="POST" action="" class="mb-4">
@@ -411,7 +462,7 @@ require_once 'includes/header.php';
                         </p>
                         <p class="mb-2">
                             <strong>Assigned To Department:</strong> 
-                            <?php echo $ticket['assigned_department_name'] ? htmlspecialchars($ticket['assigned_department_name']) : 'Unassigned'; ?>
+                            <?php echo htmlspecialchars($ticket['assigned_department_name'] ?? 'Unassigned'); ?>
                         </p>
                     </div>
                 </div>
