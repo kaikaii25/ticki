@@ -65,7 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_ticket'])) {
                          WHERE id = $ticket_id";
 
         if (mysqli_query($conn, $update_query)) {
-            $_SESSION['message'] = displaySuccess('Ticket updated successfully.');
+            setNotification('Ticket updated successfully!', 'success', 2000);
+            session_write_close();
             // Refresh ticket data after update
             $query = "SELECT t.*, u.username as creator_username, d.name as assigned_department_name, d_creator.name as creator_department_name 
                       FROM tickets t 
@@ -76,10 +77,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_ticket'])) {
             $result = mysqli_query($conn, $query);
             $ticket = mysqli_fetch_assoc($result);
         } else {
-            $_SESSION['message'] = displayError('Failed to update ticket: ' . mysqli_error($conn));
+            setNotification('Failed to update ticket: ' . mysqli_error($conn), 'error', 2000);
+            session_write_close();
         }
     } else {
-        $_SESSION['message'] = displayError('You do not have permission to edit this ticket.');
+        setNotification('You do not have permission to edit this ticket.', 'error', 2000);
+        session_write_close();
     }
     redirect('view_ticket.php?id=' . $ticket_id);
 }
@@ -192,14 +195,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ticket'])) {
         mysqli_query($conn, "DELETE FROM ticket_comments WHERE ticket_id = $ticket_id");
         // Delete the ticket
         if (mysqli_query($conn, "DELETE FROM tickets WHERE id = $ticket_id")) {
-            setNotification('Ticket deleted successfully.', 'success');
+            setNotification('Ticket deleted successfully.', 'success', 2000);
+            session_write_close();
             redirect('tickets.php');
         } else {
-            setNotification('Failed to delete ticket.', 'error');
+            setNotification('Failed to delete ticket.', 'error', 2000);
+            session_write_close();
             redirect('view_ticket.php?id=' . $ticket_id);
         }
     } else {
-        setNotification('You do not have permission to delete this ticket.', 'error');
+        setNotification('You do not have permission to delete this ticket.', 'error', 2000);
+        session_write_close();
         redirect('view_ticket.php?id=' . $ticket_id);
     }
 }

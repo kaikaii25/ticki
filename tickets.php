@@ -11,10 +11,16 @@
 <body>
 <?php
 require_once 'includes/functions.php';
+if (isset($_SESSION['notification'])) {
+    echo '<pre>DEBUG: Notification in session: ' . print_r($_SESSION['notification'], true) . '</pre>';
+}
 
 if (!isLoggedIn()) {
     redirect('login.php');
 }
+
+// TEST: Uncomment the next line to test notification display
+// setNotification('This is a test notification from tickets.php!', 'success', 2000);
 
 // Get filter parameters
 $status = isset($_GET['status']) ? sanitize($_GET['status']) : '';
@@ -34,9 +40,10 @@ while ($row = mysqli_fetch_assoc($dept_result)) {
 }
 
 // If no department filter is set in the URL, default to user's department
-if (!isset($_GET['department']) && $user_department_id) {
-    $department = $user_department_id;
-}
+// (Removed: do not auto-filter by user's department)
+// if (!isset($_GET['department']) && $user_department_id) {
+//     $department = $user_department_id;
+// }
 
 // Build query - updated to include assigned_department_id
 $query = "SELECT t.*, u.username as created_by, d.name as assigned_department_name 
@@ -72,6 +79,43 @@ if ($department) {
 // Add sorting
 $query .= " ORDER BY t.created_at DESC";
 
+// Pagination setup
+$tickets_per_page = 10;
+$page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $tickets_per_page;
+
+// Count total tickets for pagination
+$count_query = "SELECT COUNT(*) as total FROM tickets t LEFT JOIN users u ON t.created_by = u.id LEFT JOIN departments d ON t.assigned_department_id = d.id WHERE 1=1";
+if ($status) {
+    if ($status === 'completed') {
+        $count_query .= " AND (t.status = 'resolved' OR t.status = 'closed')";
+    } else {
+        $count_query .= " AND t.status = '$status'";
+    }
+}
+if ($priority) {
+    $count_query .= " AND t.priority = '$priority'";
+}
+if ($search) {
+    $search_escaped = mysqli_real_escape_string($conn, $search);
+    $search_like = "%$search_escaped%";
+    $search_id = ltrim($search_escaped, '#');
+    $count_query .= " AND (t.title LIKE '$search_like' OR t.description LIKE '$search_like' 
+        OR t.id = '$search_id' 
+        OR d.name LIKE '$search_like' 
+        OR DATE_FORMAT(t.created_at, '%b %d') LIKE '$search_like' 
+        OR DATE_FORMAT(t.created_at, '%H:%i') LIKE '$search_like' 
+        OR DATE_FORMAT(t.created_at, '%Y-%m-%d') LIKE '$search_like')";
+}
+if ($department) {
+    $count_query .= " AND t.assigned_department_id = '$department'";
+}
+$count_result = mysqli_query($conn, $count_query);
+$total_tickets = mysqli_fetch_assoc($count_result)['total'];
+$total_pages = ceil($total_tickets / $tickets_per_page);
+
+// Main tickets query with LIMIT
+$query .= " LIMIT $tickets_per_page OFFSET $offset";
 $tickets = mysqli_query($conn, $query);
 
 require_once 'includes/header.php';
@@ -86,21 +130,22 @@ setTimeout(function() {
 }, 1000);
 
 // Realtime search and keep focus
-const searchInput = document.getElementById('searchInput');
-if (searchInput) {
-    let lastValue = searchInput.value;
-    searchInput.focus();
-    searchInput.addEventListener('input', function() {
-        if (this.value !== lastValue) {
-            lastValue = this.value;
-            document.getElementById('filterForm').submit();
-        }
-    });
-    // Always refocus after form reload
-    window.onload = function() {
-        searchInput.focus();
-    };
-}
+// Remove the following block to disable real-time search for tickets
+// const searchInput = document.getElementById('searchInput');
+// if (searchInput) {
+//     let lastValue = searchInput.value;
+//     searchInput.focus();
+//     searchInput.addEventListener('input', function() {
+//         if (this.value !== lastValue) {
+//             lastValue = this.value;
+//             document.getElementById('filterForm').submit();
+//         }
+//     });
+//     // Always refocus after form reload
+//     window.onload = function() {
+//         searchInput.focus();
+//     };
+// }
 </script>
 
 <div class="container mt-4">
@@ -189,7 +234,7 @@ if (searchInput) {
 
                     <!-- Tickets Table -->
                     <?php if (mysqli_num_rows($tickets) > 0): ?>
-                        <div class="table-responsive">
+                        <div class="table-responsive modern-table">
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
@@ -206,16 +251,12 @@ if (searchInput) {
                                 <tbody>
                                     <?php while ($ticket = mysqli_fetch_assoc($tickets)): ?>
                                         <tr class="fade-in">
-                                            <td><span class="fw-bold">#<?php echo $ticket['id']; ?></span></td>
+                                            <td><span class="ticket-id">#<?php echo $ticket['id']; ?></span></td>
                                             <td>
                                                 <div class="fw-medium"><?php echo htmlspecialchars($ticket['title']); ?></div>
                                             </td>
                                             <td>
-                                                <span class="badge rounded-pill bg-<?php 
-                                                    echo $ticket['status'] === 'open' ? 'warning' : 
-                                                        ($ticket['status'] === 'in_progress' ? 'info' : 
-                                                        ($ticket['status'] === 'resolved' ? 'success' : 'secondary')); 
-                                                ?>">
+                                                <span class="modern-badge status-<?php echo $ticket['status']; ?>">
                                                     <i class="fas fa-<?php 
                                                         echo $ticket['status'] === 'open' ? 'clock' : 
                                                             ($ticket['status'] === 'in_progress' ? 'spinner' : 
@@ -225,10 +266,7 @@ if (searchInput) {
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="badge rounded-pill bg-<?php 
-                                                    echo $ticket['priority'] === 'low' ? 'secondary' : 
-                                                        ($ticket['priority'] === 'medium' ? 'primary' : 'danger'); 
-                                                ?>">
+                                                <span class="modern-badge priority-<?php echo $ticket['priority']; ?>">
                                                     <i class="fas fa-<?php 
                                                         echo $ticket['priority'] === 'low' ? 'arrow-down' : 
                                                             ($ticket['priority'] === 'medium' ? 'minus' : 'arrow-up'); 
@@ -238,27 +276,29 @@ if (searchInput) {
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <i class="fas fa-user me-2 text-muted"></i>
-                                                    <?php echo htmlspecialchars($ticket['created_by']); ?>
+                                                    <span class="fw-medium"><?php echo htmlspecialchars($ticket['created_by']); ?></span>
                                                 </div>
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <i class="fas fa-building me-2 text-muted"></i>
-                                                    <?php echo $ticket['assigned_department_name'] ? htmlspecialchars($ticket['assigned_department_name']) : '<span class="text-muted">Unassigned</span>'; ?>
+                                                    <div class="department-icon">
+                                                        <i class="fas fa-building"></i>
+                                                    </div>
+                                                    <span class="fw-medium"><?php echo $ticket['assigned_department_name'] ? htmlspecialchars($ticket['assigned_department_name']) : '<span class="text-muted">Unassigned</span>'; ?></span>
                                                 </div>
                                             </td>
                                             <td>
-                                                <div class="text-muted">
+                                                <div class="date-primary">
                                                     <i class="fas fa-calendar me-1"></i>
                                                     <?php echo date('M d, Y', strtotime($ticket['created_at'])); ?>
                                                 </div>
-                                                <small class="text-muted">
+                                                <div class="date-secondary">
+                                                    <i class="fas fa-clock me-1"></i>
                                                     <?php echo date('h:i A', strtotime($ticket['created_at'])); ?>
-                                                </small>
+                                                </div>
                                             </td>
                                             <td>
-                                                <a href="view_ticket.php?id=<?php echo $ticket['id']; ?>" class="btn btn-sm btn-info">
+                                                <a href="view_ticket.php?id=<?php echo $ticket['id']; ?>" class="action-btn action-btn-view">
                                                     <i class="fas fa-eye me-1"></i>View
                                                 </a>
                                             </td>
@@ -275,10 +315,10 @@ if (searchInput) {
                             </table>
                         </div>
                     <?php else: ?>
-                        <div class="text-center py-5">
-                            <i class="fas fa-search fs-1 text-muted mb-3"></i>
-                            <h5 class="text-muted">No tickets found</h5>
-                            <p class="text-muted mb-3">Try adjusting your filters or create a new ticket.</p>
+                        <div class="empty-state">
+                            <i class="fas fa-search empty-state-icon"></i>
+                            <h5 class="empty-state-title">No tickets found</h5>
+                            <p class="empty-state-description">Try adjusting your filters or create a new ticket.</p>
                             <div class="d-flex gap-2 justify-content-center">
                                 <a href="tickets.php" class="btn btn-outline-secondary">
                                     <i class="fas fa-undo me-1"></i>Clear Filters
@@ -294,6 +334,24 @@ if (searchInput) {
         </div>
     </div>
 </div>
+
+<?php if ($total_pages > 1): ?>
+<nav aria-label="Ticket pagination">
+    <ul class="pagination justify-content-center mt-4">
+        <li class="page-item<?php if ($page <= 1) echo ' disabled'; ?>">
+            <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>" tabindex="-1">Previous</a>
+        </li>
+        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+            <li class="page-item<?php if ($i == $page) echo ' active'; ?>">
+                <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>"><?php echo $i; ?></a>
+            </li>
+        <?php endfor; ?>
+        <li class="page-item<?php if ($page >= $total_pages) echo ' disabled'; ?>">
+            <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>">Next</a>
+        </li>
+    </ul>
+</nav>
+<?php endif; ?>
 
 <?php require_once 'includes/footer.php'; ?>
 </body>

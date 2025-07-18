@@ -82,7 +82,7 @@ setTimeout(function() {
     <div class="row mb-4">
         <div class="col-lg-3 col-md-6 mb-3">
             <a href="tickets.php" class="text-decoration-none" aria-label="View all tickets" title="View all tickets">
-                <div class="card stats-card bg-primary text-white h-100">
+                <div class="card stats-card dashboard-widget-card h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -99,7 +99,7 @@ setTimeout(function() {
         </div>
         <div class="col-lg-3 col-md-6 mb-3">
             <a href="tickets.php?status=open" class="text-decoration-none" aria-label="View open tickets" title="View open tickets">
-                <div class="card stats-card bg-warning text-white h-100">
+                <div class="card stats-card dashboard-widget-card h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -116,7 +116,7 @@ setTimeout(function() {
         </div>
         <div class="col-lg-3 col-md-6 mb-3">
             <a href="tickets.php?status=in_progress" class="text-decoration-none" aria-label="View in progress tickets" title="View in progress tickets">
-                <div class="card stats-card bg-info text-white h-100">
+                <div class="card stats-card dashboard-widget-card h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -133,7 +133,7 @@ setTimeout(function() {
         </div>
         <div class="col-lg-3 col-md-6 mb-3">
             <a href="tickets.php?status=completed" class="text-decoration-none" aria-label="View completed tickets" title="View completed tickets (resolved and closed)">
-                <div class="card stats-card bg-success text-white h-100">
+                <div class="card stats-card dashboard-widget-card h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>

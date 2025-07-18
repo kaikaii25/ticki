@@ -1,0 +1,18 @@
+{
+  "name": "nissan/ticketing-system",
+  "description": "A simple PHP & MySQL ticketing system for Nissan, cloud-ready.",
+  "type": "project",
+  "require": {
+    "php": ">=7.4"
+  },
+  "suggest": {
+    "aws/aws-sdk-php": "Required for S3 file uploads. Install with 'composer require aws/aws-sdk-php' if using S3."
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Your Name",
+      "email": "your@email.com"
+    }
+  ]
+} 

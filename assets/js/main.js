@@ -1,6 +1,102 @@
 // Main JavaScript file for NOTHING SYSTEM
 
-// Notification System
+// Modern Toast Notification System
+class ToastNotification {
+    constructor() {
+        this.container = this.createContainer();
+        this.toasts = [];
+    }
+
+    createContainer() {
+        const container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+        return container;
+    }
+
+    show(message, type = 'info', duration = 5000) {
+        const toast = this.createToast(message, type);
+        this.container.appendChild(toast);
+        this.toasts.push(toast);
+
+        // Auto-dismiss
+        setTimeout(() => this.hide(toast), duration);
+
+        return toast;
+    }
+
+    createToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `modern-toast toast-${type}`;
+        
+        const icon = this.getIcon(type);
+        const title = this.getTitle(type);
+        
+        toast.innerHTML = `
+            <div class="toast-header">
+                <div class="toast-icon">
+                    <i class="${icon}"></i>
+                </div>
+                <h6 class="toast-title">${title}</h6>
+                <button class="toast-close" onclick="toastNotification.hide(this.parentElement.parentElement)">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+            <div class="toast-progress">
+                <div class="toast-progress-bar"></div>
+            </div>
+        `;
+
+        return toast;
+    }
+
+    getIcon(type) {
+        const icons = {
+            success: 'fas fa-check',
+            error: 'fas fa-exclamation-triangle',
+            warning: 'fas fa-exclamation-circle',
+            info: 'fas fa-info-circle'
+        };
+        return icons[type] || icons.info;
+    }
+
+    getTitle(type) {
+        const titles = {
+            success: 'Success',
+            error: 'Error',
+            warning: 'Warning',
+            info: 'Information'
+        };
+        return titles[type] || titles.info;
+    }
+
+    hide(toast) {
+        toast.classList.add('hide');
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.parentElement.removeChild(toast);
+            }
+            this.toasts = this.toasts.filter(t => t !== toast);
+        }, 300);
+    }
+
+    hideAll() {
+        this.toasts.forEach(toast => this.hide(toast));
+    }
+}
+
+// Initialize toast notification system
+const toastNotification = new ToastNotification();
+
+// Global function for showing toasts
+function showToast(message, type = 'info', duration = 5000) {
+    return toastNotification.show(message, type, duration);
+}
+
+// Legacy notification support
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `alert alert-${type} notification-toast`;
@@ -10,7 +106,7 @@ function showNotification(message, type = 'success') {
         left: 50%;
         transform: translateX(-50%);
         z-index: 9999;
-        padding: 15px 30px;
+        padding: 15px;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         opacity: 0;
@@ -33,6 +129,52 @@ function showNotification(message, type = 'success') {
         }, 300);
     }, 3000);
 }
+
+// Auto-hide legacy notification toast after 1 second
+setTimeout(function() {
+    var toast = document.querySelector('.notification-toast');
+    if (toast) toast.style.display = 'none';
+}, 1000);
+
+// Form validation helpers
+function validateForm(form) {
+    let isValid = true;
+    const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+    
+    inputs.forEach(input => {
+        if (!input.value.trim()) {
+            input.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+        }
+    });
+    
+    return isValid;
+}
+
+// Auto-submit form on input change (for search)
+function setupAutoSubmit(formId, inputId) {
+    const form = document.getElementById(formId);
+    const input = document.getElementById(inputId);
+    
+    if (form && input) {
+        let lastValue = input.value;
+        input.addEventListener('input', function() {
+            if (this.value !== lastValue) {
+                lastValue = this.value;
+                form.submit();
+            }
+        });
+    }
+}
+
+// Initialize auto-submit for search forms
+// Remove or comment out the following line to disable real-time search for tickets
+// document.addEventListener('DOMContentLoaded', function() {
+//     setupAutoSubmit('filterForm', 'searchInput');
+// });
 
 // FAQ System
 function setupFAQModal() {
@@ -111,20 +253,5 @@ document.addEventListener('DOMContentLoaded', function() {
                 faqModal.style.display = 'none';
             }, 300);
         }
-    });
-});
-
-// Form Validation
-document.addEventListener('DOMContentLoaded', function() {
-    const forms = document.querySelectorAll('form');
-    
-    forms.forEach(form => {
-        form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        });
     });
 }); 

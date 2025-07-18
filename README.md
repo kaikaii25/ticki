@@ -89,3 +89,33 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 4. Use HTTPS in production.
 5. Disable display_errors and enable error logging in php.ini for production.
 6. For scaling, use a shared session store (Redis, Memcached) if needed. 
+
+## Cloud Session Storage (Redis/Memcached)
+
+For scalable sessions in the cloud, configure PHP to use Redis or Memcached as the session handler. Example for Docker or cloud hosting:
+
+### Redis (recommended)
+
+1. Add to your Dockerfile or install Redis on your server.
+2. In your php.ini or Docker environment, set:
+
+```
+session.save_handler = redis
+session.save_path = "tcp://your-redis-host:6379"
+```
+
+3. For Docker Compose, you can add a Redis service and link it to your PHP container.
+
+### Memcached
+
+1. Install Memcached and the PHP memcached extension.
+2. In your php.ini or Docker environment, set:
+
+```
+session.save_handler = memcached
+session.save_path = "your-memcached-host:11211"
+```
+
+**Note:**
+- Make sure your cloud provider allows network access between your app and the session store.
+- For AWS, you can use ElastiCache (Redis or Memcached) as the backend. 

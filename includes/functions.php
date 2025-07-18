@@ -76,10 +76,11 @@ function displaySuccess($message) {
     return "<div class='alert alert-success'>$message</div>";
 }
 
-function setNotification($message, $type = 'info') {
+function setNotification($message, $type = 'info', $duration = 5000) {
     $_SESSION['notification'] = [
         'message' => $message,
-        'type' => $type
+        'type' => $type,
+        'duration' => $duration
     ];
 }
 
@@ -87,8 +88,13 @@ function displayNotification() {
     if (!empty($_SESSION['notification'])) {
         $type = $_SESSION['notification']['type'];
         $message = $_SESSION['notification']['message'];
-        $class = $type === 'success' ? 'alert-success' : ($type === 'error' ? 'alert-danger' : 'alert-info');
-        echo "<div class='alert $class notification-toast' role='alert' style='position:fixed;top:32px;left:50%;transform:translateX(-50%);z-index:2000;min-width:320px;max-width:600px;width:100%;text-align:center;'>$message<button type='button' class='btn-close float-end ms-2' aria-label='Close' onclick='this.parentElement.style.display=\'none\''></button></div>";
+        $duration = isset($_SESSION['notification']['duration']) ? (int)$_SESSION['notification']['duration'] : 5000;
+        // Use modern toast notification
+        echo "<script>
+            document.addEventListener('DOMContentLoaded', function() {
+                showToast('" . addslashes($message) . "', '" . $type . "', " . $duration . ");
+            });
+        </script>";
         unset($_SESSION['notification']);
     }
 }
@@ -114,5 +120,48 @@ function displayCannedResponsesDropdown() {
         echo '<option value="'.htmlspecialchars($resp['content']).'">'.htmlspecialchars($resp['title']).'</option>';
     }
     echo '</select></div>';
+}
+
+// S3 Upload Support
+function uploadFile($file) {
+    $upload_driver = getenv('UPLOAD_DRIVER') ?: 'local';
+    if ($upload_driver === 's3') {
+        // S3 config from env
+        $bucket = getenv('S3_BUCKET');
+        $region = getenv('S3_REGION');
+        $key = getenv('S3_KEY');
+        $secret = getenv('S3_SECRET');
+        if (!$bucket || !$region || !$key || !$secret) {
+            throw new Exception('S3 configuration missing');
+        }
+        require_once __DIR__ . '/../vendor/autoload.php';
+        $s3 = new Aws\S3\S3Client([
+            'version' => 'latest',
+            'region'  => $region,
+            'credentials' => [
+                'key'    => $key,
+                'secret' => $secret,
+            ],
+        ]);
+        $filename = uniqid() . '_' . basename($file['name']);
+        $result = $s3->putObject([
+            'Bucket' => $bucket,
+            'Key'    => $filename,
+            'SourceFile' => $file['tmp_name'],
+            'ACL'    => 'public-read',
+        ]);
+        return $result['ObjectURL'];
+    } else {
+        // Local upload
+        $upload_dir = getenv('UPLOAD_PATH') ?: 'uploads/';
+        if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+        $filename = uniqid() . '_' . basename($file['name']);
+        $target_path = $upload_dir . $filename;
+        if (move_uploaded_file($file['tmp_name'], $target_path)) {
+            return $target_path;
+        } else {
+            throw new Exception('File upload failed');
+        }
+    }
 }
 ?> 

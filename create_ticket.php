@@ -65,11 +65,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $query = "INSERT INTO tickets (title, description, priority, created_by, department_id, assigned_department_id, attachment) 
                       VALUES ('$title', '$description', '$priority', $created_by, $department_id, $assigned_department_id, '$attachment_path')";
-            if (mysqli_query($conn, $query)) {
-                setNotification('Ticket created successfully!', 'success');
-                redirect('tickets.php');
-            } else {
-                $error = 'Failed to create ticket. Please try again.';
+        if (mysqli_query($conn, $query)) {
+            setNotification('Ticket created successfully!', 'success', 2000);
+            session_write_close();
+            redirect('tickets.php');
+        } else {
+            $error = 'Failed to create ticket. Please try again.';
             }
         }
     }
@@ -81,10 +82,10 @@ require_once 'includes/header.php';
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-12">
-            <div class="card dashboard-card">
+            <div class="card modern-form">
                 <div class="card-header">
                     <h4 class="mb-0">
-                        <i class="fas fa-plus-circle me-2"></i>Create New Ticket
+                        <i class="fas fa-plus-circle"></i>Create New Ticket
                     </h4>
                 </div>
                 <div class="card-body">
@@ -93,72 +94,84 @@ require_once 'includes/header.php';
                     <?php endif; ?>
 
                     <form method="POST" action="" enctype="multipart/form-data">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="mb-4">
-                                    <label for="title" class="form-label">
-                                        <i class="fas fa-heading me-1"></i>Title
-                                    </label>
-                                    <input type="text" class="form-control form-control-lg" id="title" name="title" placeholder="Enter ticket title..." required>
-                                </div>
-                                <div class="mb-4">
-                                    <label for="description" class="form-label">
-                                        <i class="fas fa-align-left me-1"></i>Description
-                                    </label>
-                                    <textarea class="form-control" id="description" name="description" rows="5" placeholder="Describe your issue or request..." required></textarea>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="mb-4">
-                                    <label for="priority" class="form-label">
-                                        <i class="fas fa-exclamation-triangle me-1"></i>Priority
-                                    </label>
-                                    <select class="form-select form-select-lg" id="priority" name="priority" required>
-                                        <option value="low">Low Priority</option>
-                                        <option value="medium" selected>Medium Priority</option>
-                                        <option value="high">High Priority</option>
-                                    </select>
-                                </div>
-                                <div class="mb-4">
-                                    <label for="department_id" class="form-label">
-                                        <i class="fas fa-building me-1"></i>Your Department
-                                    </label>
-                                    <select class="form-select form-select-lg" id="department_id" name="department_id" required>
-                                        <option value="">Select Your Department</option>
-                                        <?php foreach ($departments as $dept): ?>
-                                            <option value="<?php echo $dept['id']; ?>">
-                                                <?php echo htmlspecialchars($dept['name']); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="mb-4">
-                                    <label for="assigned_department_id" class="form-label">
-                                        <i class="fas fa-users me-1"></i>Assign To Department
-                                    </label>
-                                    <select class="form-select form-select-lg" id="assigned_department_id" name="assigned_department_id">
-                                        <option value="">Unassigned (Optional)</option>
-                                        <?php foreach ($departments as $dept): ?>
-                                            <option value="<?php echo $dept['id']; ?>">
-                                                <?php echo htmlspecialchars($dept['name']); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <small class="text-muted">Leave unassigned if you're not sure which department should handle this.</small>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-section">
+                                    <div class="form-section-title">
+                                        <i class="fas fa-edit"></i>Ticket Details
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="title" class="form-label">
+                                            <i class="fas fa-heading"></i>Title
+                                        </label>
+                                        <input type="text" class="form-control form-control-lg" id="title" name="title" placeholder="Enter ticket title..." required>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="description" class="form-label">
+                                            <i class="fas fa-align-left"></i>Description
+                                        </label>
+                                        <textarea class="form-control" id="description" name="description" rows="5" placeholder="Describe your issue or request..." required></textarea>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="attachment" class="form-label">
+                                            <i class="fas fa-paperclip"></i>Attachment
+                                        </label>
+                                        <input type="file" class="form-control" id="attachment" name="attachment">
+                                        <small class="text-muted">Supported formats: JPG, PNG, GIF, PDF (max 5MB)</small>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="attachment" class="form-label">Attachment</label>
-                            <input type="file" class="form-control" id="attachment" name="attachment">
+                            <div class="col-md-6">
+                                <div class="form-section">
+                                    <div class="form-section-title">
+                                        <i class="fas fa-cog"></i>Settings
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="priority" class="form-label">
+                                            <i class="fas fa-exclamation-triangle"></i>Priority
+                                        </label>
+                                        <select class="form-select form-select-lg" id="priority" name="priority" required>
+                                            <option value="low">Low Priority</option>
+                                            <option value="medium" selected>Medium Priority</option>
+                                            <option value="high">High Priority</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="department_id" class="form-label">
+                                            <i class="fas fa-building"></i>Your Department
+                                        </label>
+                                        <select class="form-select form-select-lg" id="department_id" name="department_id" required>
+                                            <option value="">Select Your Department</option>
+                                            <?php foreach ($departments as $dept): ?>
+                                                <option value="<?php echo $dept['id']; ?>">
+                                                    <?php echo htmlspecialchars($dept['name']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="assigned_department_id" class="form-label">
+                                            <i class="fas fa-users"></i>Assign To Department
+                                        </label>
+                                        <select class="form-select form-select-lg" id="assigned_department_id" name="assigned_department_id">
+                                            <option value="">Unassigned (Optional)</option>
+                                            <?php foreach ($departments as $dept): ?>
+                                                <option value="<?php echo $dept['id']; ?>">
+                                                    <?php echo htmlspecialchars($dept['name']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <small class="text-muted">Leave unassigned if you're not sure which department should handle this.</small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="d-grid gap-2 mt-4">
                             <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-paper-plane me-2"></i>Create Ticket
+                                <i class="fas fa-paper-plane"></i>Create Ticket
                             </button>
                             <a href="tickets.php" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>Back to Tickets
+                                <i class="fas fa-arrow-left"></i>Back to Tickets
                             </a>
                         </div>
                     </form>
