@@ -161,7 +161,8 @@ setTimeout(function() {
                 </div>
                 <div class="card-body">
                     <?php if (mysqli_num_rows($recent_tickets) > 0): ?>
-                        <div class="table-responsive">
+                        <!-- Desktop Table -->
+                        <div class="table-responsive d-none d-md-block">
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
@@ -176,7 +177,11 @@ setTimeout(function() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php while ($ticket = mysqli_fetch_assoc($recent_tickets)): ?>
+                                    <?php 
+                                    // Reset the result pointer
+                                    mysqli_data_seek($recent_tickets, 0);
+                                    while ($ticket = mysqli_fetch_assoc($recent_tickets)): 
+                                    ?>
                                         <tr class="fade-in">
                                             <td><span class="fw-bold">#<?php echo $ticket['id']; ?></span></td>
                                             <td>
@@ -239,8 +244,69 @@ setTimeout(function() {
                                 </tbody>
                             </table>
                         </div>
+
+                        <!-- Mobile Cards Layout -->
+                        <div class="mobile-cards-container d-md-none">
+                            <?php 
+                            // Reset the result pointer again for mobile cards
+                            mysqli_data_seek($recent_tickets, 0);
+                            while ($ticket = mysqli_fetch_assoc($recent_tickets)): 
+                            ?>
+                                <div class="mobile-ticket-card" data-ticket-id="<?php echo $ticket['id']; ?>">
+                                    <div class="mobile-card-header">
+                                        <h5 class="mobile-card-title"><?php echo htmlspecialchars($ticket['title']); ?></h5>
+                                        <div class="mobile-card-id">
+                                            <i class="fas fa-hashtag"></i>
+                                            #<?php echo $ticket['id']; ?>
+                                        </div>
+                                    </div>
+                                    <div class="mobile-card-body">
+                                        <div class="mobile-card-meta">
+                                            <div class="mobile-meta-item">
+                                                <i class="fas fa-user"></i>
+                                                <span><?php echo htmlspecialchars($ticket['created_by']); ?></span>
+                                            </div>
+                                            <div class="mobile-meta-item">
+                                                <i class="fas fa-building"></i>
+                                                <span><?php echo $ticket['assigned_department_name'] ? htmlspecialchars($ticket['assigned_department_name']) : 'Unassigned'; ?></span>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <span class="mobile-badge status-<?php echo $ticket['status']; ?>">
+                                                <i class="fas fa-<?php 
+                                                    echo $ticket['status'] === 'open' ? 'clock' : 
+                                                        ($ticket['status'] === 'in_progress' ? 'spinner' : 
+                                                        ($ticket['status'] === 'resolved' ? 'check' : 'times')); 
+                                                ?>"></i>
+                                                <?php echo ucfirst(str_replace('_', ' ', $ticket['status'])); ?>
+                                            </span>
+                                            <span class="mobile-badge priority-<?php echo $ticket['priority']; ?>">
+                                                <i class="fas fa-<?php 
+                                                    echo $ticket['priority'] === 'low' ? 'arrow-down' : 
+                                                        ($ticket['priority'] === 'medium' ? 'minus' : 'arrow-up'); 
+                                                ?>"></i>
+                                                <?php echo ucfirst($ticket['priority']); ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="mobile-card-footer">
+                                        <div class="mobile-card-date">
+                                            <i class="fas fa-calendar"></i>
+                                            <?php echo date('M d, Y', strtotime($ticket['created_at'])); ?>
+                                        </div>
+                                        <div class="mobile-card-actions">
+                                            <a href="view_ticket.php?id=<?php echo $ticket['id']; ?>" class="mobile-action-btn primary">
+                                                <i class="fas fa-eye"></i>
+                                                View
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endwhile; ?>
+                        </div>
                     <?php else: ?>
-                        <div class="text-center py-5">
+                        <!-- Desktop Empty State -->
+                        <div class="text-center py-5 d-none d-md-block">
                             <i class="fas fa-ticket-alt fs-1 text-muted mb-3"></i>
                             <h5 class="text-muted">No recent tickets</h5>
                             <p class="text-muted mb-3">Go to Tickets to create your first ticket!</p>
@@ -248,12 +314,52 @@ setTimeout(function() {
                                 <i class="fas fa-list me-2"></i>View All Tickets
                             </a>
                         </div>
+
+                        <!-- Mobile Empty State -->
+                        <div class="mobile-empty-state d-md-none">
+                            <i class="fas fa-ticket-alt mobile-empty-icon"></i>
+                            <h5 class="mobile-empty-title">No recent tickets</h5>
+                            <p class="mobile-empty-description">Go to Tickets to create your first ticket!</p>
+                            <div class="mobile-empty-actions">
+                                <a href="tickets.php" class="mobile-action-btn primary">
+                                    <i class="fas fa-list me-1"></i>View All Tickets
+                                </a>
+                            </div>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+// Mobile card interactions for dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile card interactions
+    const mobileCards = document.querySelectorAll('.mobile-ticket-card');
+    mobileCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Don't trigger if clicking on action buttons
+            if (e.target.closest('.mobile-action-btn')) {
+                return;
+            }
+            
+            const ticketId = this.getAttribute('data-ticket-id');
+            window.location.href = `view_ticket.php?id=${ticketId}`;
+        });
+    });
+    
+    // Add mobile-specific animations
+    if (window.innerWidth <= 768) {
+        const mobileCards = document.querySelectorAll('.mobile-ticket-card');
+        mobileCards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.classList.add('fade-in');
+        });
+    }
+});
+</script>
 
 <?php require_once 'includes/footer.php'; ?>
 </body>

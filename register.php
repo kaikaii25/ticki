@@ -58,37 +58,41 @@ usort($departments, function($a, $b) {
 });
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = sanitize($_POST['username']);
-    $email = sanitize($_POST['email']);
-    $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
-    $department_id = sanitize($_POST['department_id']);
-
-    // Validation
-    if (strlen($password) < 6) {
-        $error = 'Password must be at least 6 characters long';
-    } elseif ($password !== $confirm_password) {
-        $error = 'Passwords do not match';
-    } elseif (empty($department_id)) {
-        $error = 'Please select a department';
+    if (!validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $error = 'Invalid CSRF token. Please refresh and try again.';
     } else {
-        // Check if username or email already exists
-        $query = "SELECT id FROM users WHERE username = '$username' OR email = '$email'";
-        $result = mysqli_query($conn, $query);
+        $username = sanitize($_POST['username']);
+        $email = sanitize($_POST['email']);
+        $password = $_POST['password'];
+        $confirm_password = $_POST['confirm_password'];
+        $department_id = sanitize($_POST['department_id']);
 
-        if (mysqli_num_rows($result) > 0) {
-            $error = 'Username or email already exists';
+        // Validation
+        if (strlen($password) < 6) {
+            $error = 'Password must be at least 6 characters long';
+        } elseif ($password !== $confirm_password) {
+            $error = 'Passwords do not match';
+        } elseif (empty($department_id)) {
+            $error = 'Please select a department';
         } else {
-            // Create new user
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $query = "INSERT INTO users (username, email, password, department_id) 
-                     VALUES ('$username', '$email', '$hashed_password', $department_id)";
-            
-            if (mysqli_query($conn, $query)) {
-                $_SESSION['message'] = displaySuccess('Registration successful! Please login.');
-                redirect('login.php');
+            // Check if username or email already exists
+            $query = "SELECT id FROM users WHERE username = '$username' OR email = '$email'";
+            $result = mysqli_query($conn, $query);
+
+            if (mysqli_num_rows($result) > 0) {
+                $error = 'Username or email already exists';
             } else {
-                $error = 'Registration failed. Please try again.';
+                // Create new user
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $query = "INSERT INTO users (username, email, password, department_id) 
+                         VALUES ('$username', '$email', '$hashed_password', $department_id)";
+                
+                if (mysqli_query($conn, $query)) {
+                    $_SESSION['message'] = displaySuccess('Registration successful! Please login.');
+                    redirect('login.php');
+                } else {
+                    $error = 'Registration failed. Please try again.';
+                }
             }
         }
     }
@@ -109,6 +113,7 @@ require_once 'includes/header.php';
                         <?php echo displayError($error); ?>
                     <?php endif; ?>
                     <form method="POST" action="" class="mt-3">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(getCsrfToken()); ?>">
                         <div class="mb-4">
                             <label for="username" class="form-label">Username</label>
                             <input type="text" class="form-control form-control-lg" id="username" name="username" required>

@@ -119,3 +119,65 @@ session.save_path = "your-memcached-host:11211"
 **Note:**
 - Make sure your cloud provider allows network access between your app and the session store.
 - For AWS, you can use ElastiCache (Redis or Memcached) as the backend. 
+
+## Background Jobs & Queue
+
+This system includes a simple file-based queue for background jobs (e.g., sending emails, generating reports).
+
+### Usage
+- To queue a job: `queueJob('send_email', ['to' => $to, 'subject' => $subject, 'body' => $body]);`
+- Jobs are stored as JSON files in `logs/queue/`.
+
+### Processing Jobs
+- Create a CLI script or cron job to read and process jobs from the `logs/queue` directory.
+- For each job, perform the required action (e.g., send the email) and then delete the job file.
+
+### Production Recommendation
+- For scalable production use, switch to a real queue system (Redis, RabbitMQ, AWS SQS, etc.).
+- Use a worker process or service to process jobs asynchronously. 
+
+## Accessibility & UX
+
+This system aims to be user-friendly and accessible. Here are some best practices and recommendations:
+
+- Use semantic HTML elements (e.g., <button>, <nav>, <main>, <form>, <label>, <input>).
+- Ensure all form fields have associated <label> elements.
+- Use ARIA attributes where appropriate (e.g., aria-label, aria-live for notifications).
+- Maintain sufficient color contrast for text and UI elements (use tools like WebAIM Contrast Checker).
+- Ensure all interactive elements are keyboard accessible (tab order, focus states).
+- Test with screen readers (NVDA, VoiceOver, JAWS).
+- Use responsive design for mobile and tablet users.
+- Add skip-to-content links for easier navigation.
+- Use alt text for all images and icons.
+
+### Tools for Testing
+- [axe DevTools](https://www.deque.com/axe/devtools/)
+- [Lighthouse](https://developers.google.com/web/tools/lighthouse)
+- [WAVE](https://wave.webaim.org/)
+
+### Quick Wins
+- Review your forms and navigation for keyboard and screen reader accessibility.
+- Check color contrast and font sizes.
+- Test on mobile devices for touch usability. 
+
+## Backup & Disaster Recovery
+
+To ensure business continuity, regularly back up your database and uploaded files.
+
+### Database Backup
+- Use `mysqldump` or your cloud provider's backup tools to export the database regularly.
+- Example: `mysqldump -u $DB_USER -p$DB_PASS $DB_NAME > backup.sql`
+- Automate backups with cron jobs or cloud backup services.
+
+### File Backup
+- Back up the `uploads/` directory (or your cloud storage bucket) regularly.
+- Use tools like `rsync`, cloud storage snapshots, or managed backup solutions.
+
+### Restore Procedures
+- To restore the database: `mysql -u $DB_USER -p$DB_PASS $DB_NAME < backup.sql`
+- To restore files: copy the backup files back to the `uploads/` directory or cloud bucket.
+
+### Recommendations
+- Store backups in a secure, offsite location.
+- Test your restore process periodically.
+- For cloud deployments, use managed backup and snapshot features. 

@@ -26,4 +26,8 @@ if (mysqli_query($conn, $sql)) {
 } else {
     echo "Error updating tickets table: " . mysqli_error($conn);
 }
+
+// Add 2FA secret column to users table if not exists
+$sql = "ALTER TABLE users ADD COLUMN IF NOT EXISTS 2fa_secret VARCHAR(32) DEFAULT NULL";
+mysqli_query($conn, $sql);
 ?> 

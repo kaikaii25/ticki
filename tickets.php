@@ -172,17 +172,17 @@ setTimeout(function() {
                 </div>
                 <div class="card-body">
                     <!-- Filters -->
-                    <form method="GET" action="" class="mb-4" id="filterForm">
+                    <form method="GET" action="" class="mb-4 filter-form" id="filterForm">
                         <div class="row g-3">
-                            <div class="col-lg-4 col-md-6">
+                            <div class="col-lg-4 col-md-6 col-12">
                                 <div class="input-group">
                                     <span class="input-group-text">
                                         <i class="fas fa-search"></i>
                                     </span>
-                                    <input type="text" class="form-control" name="search" id="searchInput" placeholder="Search by title or description..." value="<?php echo htmlspecialchars($search); ?>" autocomplete="off" autofocus>
+                                    <input type="text" class="form-control" name="search" id="searchInput" placeholder="Search tickets..." value="<?php echo htmlspecialchars($search); ?>" autocomplete="off" autofocus>
                                 </div>
                             </div>
-                            <div class="col-lg-2 col-md-6">
+                            <div class="col-lg-2 col-md-6 col-6">
                                 <div class="position-relative">
                                     <select class="form-select" name="status" onchange="document.getElementById('filterForm').submit();">
                                         <option value="">All Status</option>
@@ -197,7 +197,7 @@ setTimeout(function() {
                                     </span>
                                 </div>
                             </div>
-                            <div class="col-lg-2 col-md-6">
+                            <div class="col-lg-2 col-md-6 col-6">
                                 <div class="position-relative">
                                     <select class="form-select" name="priority" onchange="document.getElementById('filterForm').submit();">
                                         <option value="">All Priority</option>
@@ -232,7 +232,62 @@ setTimeout(function() {
                         </div>
                     </form>
 
-                    <!-- Tickets Table -->
+                    <!-- Mobile Search Bar -->
+                    <div class="mobile-search-bar">
+                        <input type="text" class="mobile-search-input" id="mobileSearchInput" placeholder="Search tickets..." value="<?php echo htmlspecialchars($search); ?>">
+                    </div>
+
+                    <!-- Mobile Filter Card -->
+                    <div class="mobile-filter-card">
+                        <div class="mobile-filter-header">
+                            <h6 class="mobile-filter-title">
+                                <i class="fas fa-filter me-2"></i>Filters
+                            </h6>
+                            <button type="button" class="mobile-filter-toggle" onclick="toggleMobileFilters()">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        <div class="mobile-filter-content" id="mobileFilterContent">
+                            <form method="GET" action="" class="mobile-filter-row">
+                                <div class="mobile-filter-group">
+                                    <label class="mobile-filter-label">Status</label>
+                                    <select class="mobile-filter-select" name="status" onchange="this.form.submit()">
+                                        <option value="">All Status</option>
+                                        <option value="open" <?php echo $status === 'open' ? 'selected' : ''; ?>>Open</option>
+                                        <option value="in_progress" <?php echo $status === 'in_progress' ? 'selected' : ''; ?>>In Progress</option>
+                                        <option value="resolved" <?php echo $status === 'resolved' ? 'selected' : ''; ?>>Resolved</option>
+                                        <option value="closed" <?php echo $status === 'closed' ? 'selected' : ''; ?>>Closed</option>
+                                        <option value="completed" <?php echo $status === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                                    </select>
+                                </div>
+                                <div class="mobile-filter-group">
+                                    <label class="mobile-filter-label">Priority</label>
+                                    <select class="mobile-filter-select" name="priority" onchange="this.form.submit()">
+                                        <option value="">All Priority</option>
+                                        <option value="low" <?php echo $priority === 'low' ? 'selected' : ''; ?>>Low</option>
+                                        <option value="medium" <?php echo $priority === 'medium' ? 'selected' : ''; ?>>Medium</option>
+                                        <option value="high" <?php echo $priority === 'high' ? 'selected' : ''; ?>>High</option>
+                                    </select>
+                                </div>
+                                <div class="mobile-filter-group">
+                                    <label class="mobile-filter-label">Department</label>
+                                    <select class="mobile-filter-select" name="department" onchange="this.form.submit()">
+                                        <option value="">All Departments</option>
+                                        <?php foreach ($departments as $dept): ?>
+                                            <option value="<?php echo $dept['id']; ?>" <?php echo $department == $dept['id'] ? 'selected' : ''; ?>><?php echo htmlspecialchars($dept['name']); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="mobile-filter-group">
+                                    <a href="tickets.php" class="mobile-action-btn secondary w-100 text-center">
+                                        <i class="fas fa-undo me-1"></i>Reset Filters
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Desktop Table -->
                     <?php if (mysqli_num_rows($tickets) > 0): ?>
                         <div class="table-responsive modern-table">
                             <table class="table table-hover">
@@ -314,7 +369,74 @@ setTimeout(function() {
                                 </tbody>
                             </table>
                         </div>
+
+                        <!-- Mobile Cards Layout -->
+                        <div class="mobile-cards-container">
+                            <?php 
+                            // Reset the result pointer
+                            mysqli_data_seek($tickets, 0);
+                            while ($ticket = mysqli_fetch_assoc($tickets)): 
+                            ?>
+                                <div class="mobile-ticket-card" data-ticket-id="<?php echo $ticket['id']; ?>">
+                                    <div class="mobile-card-header">
+                                        <h5 class="mobile-card-title"><?php echo htmlspecialchars($ticket['title']); ?></h5>
+                                        <div class="mobile-card-id">
+                                            <i class="fas fa-hashtag"></i>
+                                            #<?php echo $ticket['id']; ?>
+                                        </div>
+                                    </div>
+                                    <div class="mobile-card-body">
+                                        <div class="mobile-card-meta">
+                                            <div class="mobile-meta-item">
+                                                <i class="fas fa-user"></i>
+                                                <span><?php echo htmlspecialchars($ticket['created_by']); ?></span>
+                                            </div>
+                                            <div class="mobile-meta-item">
+                                                <i class="fas fa-building"></i>
+                                                <span><?php echo $ticket['assigned_department_name'] ? htmlspecialchars($ticket['assigned_department_name']) : 'Unassigned'; ?></span>
+                                            </div>
+                                            <?php if (!empty($ticket['attachment'])): ?>
+                                                <div class="mobile-meta-item">
+                                                    <i class="fas fa-paperclip"></i>
+                                                    <span>Has attachment</span>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <span class="mobile-badge status-<?php echo $ticket['status']; ?>">
+                                                <i class="fas fa-<?php 
+                                                    echo $ticket['status'] === 'open' ? 'clock' : 
+                                                        ($ticket['status'] === 'in_progress' ? 'spinner' : 
+                                                        ($ticket['status'] === 'resolved' ? 'check' : 'times')); 
+                                                ?>"></i>
+                                                <?php echo ucfirst(str_replace('_', ' ', $ticket['status'])); ?>
+                                            </span>
+                                            <span class="mobile-badge priority-<?php echo $ticket['priority']; ?>">
+                                                <i class="fas fa-<?php 
+                                                    echo $ticket['priority'] === 'low' ? 'arrow-down' : 
+                                                        ($ticket['priority'] === 'medium' ? 'minus' : 'arrow-up'); 
+                                                ?>"></i>
+                                                <?php echo ucfirst($ticket['priority']); ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="mobile-card-footer">
+                                        <div class="mobile-card-date">
+                                            <i class="fas fa-calendar"></i>
+                                            <?php echo date('M d, Y', strtotime($ticket['created_at'])); ?>
+                                        </div>
+                                        <div class="mobile-card-actions">
+                                            <a href="view_ticket.php?id=<?php echo $ticket['id']; ?>" class="mobile-action-btn primary">
+                                                <i class="fas fa-eye"></i>
+                                                View
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endwhile; ?>
+                        </div>
                     <?php else: ?>
+                        <!-- Desktop Empty State -->
                         <div class="empty-state">
                             <i class="fas fa-search empty-state-icon"></i>
                             <h5 class="empty-state-title">No tickets found</h5>
@@ -328,6 +450,21 @@ setTimeout(function() {
                                 </a>
                             </div>
                         </div>
+
+                        <!-- Mobile Empty State -->
+                        <div class="mobile-empty-state">
+                            <i class="fas fa-search mobile-empty-icon"></i>
+                            <h5 class="mobile-empty-title">No tickets found</h5>
+                            <p class="mobile-empty-description">Try adjusting your filters or create a new ticket.</p>
+                            <div class="mobile-empty-actions">
+                                <a href="tickets.php" class="mobile-action-btn secondary">
+                                    <i class="fas fa-undo me-1"></i>Clear Filters
+                                </a>
+                                <a href="create_ticket.php" class="mobile-action-btn primary">
+                                    <i class="fas fa-plus me-1"></i>Create Ticket
+                                </a>
+                            </div>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -336,7 +473,8 @@ setTimeout(function() {
 </div>
 
 <?php if ($total_pages > 1): ?>
-<nav aria-label="Ticket pagination">
+<!-- Desktop Pagination -->
+<nav aria-label="Ticket pagination" class="d-none d-md-block">
     <ul class="pagination justify-content-center mt-4">
         <li class="page-item<?php if ($page <= 1) echo ' disabled'; ?>">
             <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>" tabindex="-1">Previous</a>
@@ -351,8 +489,123 @@ setTimeout(function() {
         </li>
     </ul>
 </nav>
+
+<!-- Mobile Pagination -->
+<nav aria-label="Mobile ticket pagination" class="d-md-none">
+    <div class="mobile-pagination">
+        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>" 
+           class="mobile-page-btn<?php if ($page <= 1) echo ' disabled'; ?>" 
+           <?php if ($page <= 1) echo 'onclick="return false;"'; ?>>
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        
+        <span class="mobile-page-btn active">
+            <?php echo $page; ?> of <?php echo $total_pages; ?>
+        </span>
+        
+        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>" 
+           class="mobile-page-btn<?php if ($page >= $total_pages) echo ' disabled'; ?>" 
+           <?php if ($page >= $total_pages) echo 'onclick="return false;"'; ?>>
+            <i class="fas fa-chevron-right"></i>
+        </a>
+    </div>
+</nav>
 <?php endif; ?>
 
+<!-- Mobile Floating Action Button -->
+<button class="mobile-fab" onclick="window.location.href='create_ticket.php'" title="Create New Ticket">
+    <i class="fas fa-plus"></i>
+</button>
+
 <?php require_once 'includes/footer.php'; ?>
+
+<script>
+// Mobile-specific JavaScript
+function toggleMobileFilters() {
+    const content = document.getElementById('mobileFilterContent');
+    const toggle = document.querySelector('.mobile-filter-toggle i');
+    
+    if (content.classList.contains('show')) {
+        content.classList.remove('show');
+        toggle.className = 'fas fa-chevron-down';
+    } else {
+        content.classList.add('show');
+        toggle.className = 'fas fa-chevron-up';
+    }
+}
+
+// Mobile search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileSearchInput = document.getElementById('mobileSearchInput');
+    if (mobileSearchInput) {
+        let searchTimeout;
+        mobileSearchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const searchValue = this.value;
+                const currentUrl = new URL(window.location);
+                currentUrl.searchParams.set('search', searchValue);
+                currentUrl.searchParams.delete('page'); // Reset to first page
+                window.location.href = currentUrl.toString();
+            }, 500);
+        });
+    }
+    
+    // Mobile card interactions
+    const mobileCards = document.querySelectorAll('.mobile-ticket-card');
+    mobileCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Don't trigger if clicking on action buttons
+            if (e.target.closest('.mobile-action-btn')) {
+                return;
+            }
+            
+            const ticketId = this.getAttribute('data-ticket-id');
+            window.location.href = `view_ticket.php?id=${ticketId}`;
+        });
+    });
+    
+    // Mobile swipe gestures (optional enhancement)
+    let startX = 0;
+    let currentX = 0;
+    
+    mobileCards.forEach(card => {
+        card.addEventListener('touchstart', function(e) {
+            startX = e.touches[0].clientX;
+        });
+        
+        card.addEventListener('touchmove', function(e) {
+            currentX = e.touches[0].clientX;
+            const diffX = currentX - startX;
+            
+            if (Math.abs(diffX) > 50) {
+                this.style.transform = `translateX(${diffX * 0.3}px)`;
+            }
+        });
+        
+        card.addEventListener('touchend', function(e) {
+            const diffX = currentX - startX;
+            
+            if (Math.abs(diffX) > 100) {
+                // Swipe action - could be used for quick actions
+                if (diffX > 0) {
+                    // Swipe right - could mark as resolved
+                    this.classList.add('swipe-right');
+                } else {
+                    // Swipe left - could mark as in progress
+                    this.classList.add('swipe-left');
+                }
+                
+                setTimeout(() => {
+                    this.style.transform = '';
+                    this.classList.remove('swipe-right', 'swipe-left');
+                }, 300);
+            } else {
+                this.style.transform = '';
+            }
+        });
+    });
+});
+</script>
 </body>
 </html> 

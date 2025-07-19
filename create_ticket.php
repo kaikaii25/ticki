@@ -34,43 +34,55 @@ while ($row = mysqli_fetch_assoc($result)) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $title = sanitize($_POST['title']);
-    $description = sanitize($_POST['description']);
-    $priority = sanitize($_POST['priority']);
-    $department_id = sanitize($_POST['department_id']); // Department of the creator
-    $assigned_department_id = !empty($_POST['assigned_department_id']) ? sanitize($_POST['assigned_department_id']) : 'NULL';
-    $created_by = $_SESSION['user_id']; // ID of the creator
-    $attachment_path = '';
-
-    if (empty($title) || empty($description)) {
-        $error = 'Title and description are required';
+    if (!validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $error = 'Invalid CSRF token. Please refresh and try again.';
     } else {
-        if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
-            $upload_dir = getenv('UPLOAD_PATH') ?: 'uploads/';
-            if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
-            $filename = uniqid() . '_' . basename($_FILES['attachment']['name']);
-            $target_path = $upload_dir . $filename;
-            $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
-            $max_size = 5 * 1024 * 1024; // 5MB
-            if (!in_array($_FILES['attachment']['type'], $allowed_types)) {
-                $error = 'Only JPG, PNG, GIF images and PDF files are allowed.';
-            } elseif ($_FILES['attachment']['size'] > $max_size) {
-                $error = 'File size must be less than 5MB.';
-            } elseif (move_uploaded_file($_FILES['attachment']['tmp_name'], $target_path)) {
-                $attachment_path = $target_path;
+        $title = sanitize($_POST['title']);
+        $description = sanitize($_POST['description']);
+        $priority = sanitize($_POST['priority']);
+        $department_id = sanitize($_POST['department_id']); // Department of the creator
+        $assigned_department_id = !empty($_POST['assigned_department_id']) ? sanitize($_POST['assigned_department_id']) : 'NULL';
+        $created_by = $_SESSION['user_id']; // ID of the creator
+        $attachment_path = '';
+        if (empty($title) || empty($description)) {
+            $error = 'Title and description are required';
+        } else {
+            if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
+                $upload_dir = getenv('UPLOAD_PATH') ?: 'uploads/';
+                if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+                $filename = uniqid() . '_' . basename($_FILES['attachment']['name']);
+                $target_path = $upload_dir . $filename;
+                $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+                $allowed_exts = ['jpg', 'jpeg', 'png', 'gif', 'pdf'];
+                $max_size = 5 * 1024 * 1024; // 5MB
+                $filetype = $_FILES['attachment']['type'];
+                $ext = strtolower(pathinfo($_FILES['attachment']['name'], PATHINFO_EXTENSION));
+                $dangerous_exts = ['php', 'exe', 'sh', 'bat', 'js', 'html', 'htm', 'phtml', 'pl', 'py', 'rb', 'asp', 'aspx', 'jsp', 'cgi'];
+                if (!in_array($filetype, $allowed_types) || !in_array($ext, $allowed_exts)) {
+                    $error = 'Only JPG, PNG, GIF images and PDF files are allowed.';
+                } elseif (in_array($ext, $dangerous_exts)) {
+                    $error = 'This file type is not allowed.';
+                } elseif ($_FILES['attachment']['size'] > $max_size) {
+                    $error = 'File size must be less than 5MB.';
+                } else {
+                    // Placeholder: integrate virus scanning here if needed
+                    if (move_uploaded_file($_FILES['attachment']['tmp_name'], $target_path)) {
+                        $attachment_path = $target_path;
+                    }
+                }
             }
-        }
-        if (!empty($error)) {
-            // Do not proceed if upload error
-        } else {
-            $query = "INSERT INTO tickets (title, description, priority, created_by, department_id, assigned_department_id, attachment) 
-                      VALUES ('$title', '$description', '$priority', $created_by, $department_id, $assigned_department_id, '$attachment_path')";
-        if (mysqli_query($conn, $query)) {
-            setNotification('Ticket created successfully!', 'success', 2000);
-            session_write_close();
-            redirect('tickets.php');
-        } else {
-            $error = 'Failed to create ticket. Please try again.';
+            if (!empty($error)) {
+                // Do not proceed if upload error
+            } else {
+                $query = "INSERT INTO tickets (title, description, priority, created_by, department_id, assigned_department_id, attachment) 
+                          VALUES ('$title', '$description', '$priority', $created_by, $department_id, $assigned_department_id, '$attachment_path')";
+                if (mysqli_query($conn, $query)) {
+                    setNotification('Ticket created successfully!', 'success', 2000);
+                    session_write_close();
+                    redirect('tickets.php');
+                } else {
+                    $error = 'Failed to create ticket. Please try again.';
+                }
             }
         }
     }
@@ -94,6 +106,7 @@ require_once 'includes/header.php';
                     <?php endif; ?>
 
                     <form method="POST" action="" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(getCsrfToken()); ?>">
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <div class="form-section">

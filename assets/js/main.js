@@ -170,6 +170,153 @@ function setupAutoSubmit(formId, inputId) {
     }
 }
 
+// Mobile-specific enhancements
+document.addEventListener('DOMContentLoaded', function() {
+    // Prevent zoom on input focus for iOS
+    const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"], textarea, select');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            if (window.innerWidth <= 768) {
+                this.style.fontSize = '16px';
+            }
+        });
+    });
+    
+    // Improve mobile table interactions
+    const tableRows = document.querySelectorAll('.table-responsive .table tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('touchstart', function() {
+            this.style.backgroundColor = 'rgba(13, 110, 253, 0.1)';
+        });
+        
+        row.addEventListener('touchend', function() {
+            setTimeout(() => {
+                this.style.backgroundColor = '';
+            }, 150);
+        });
+    });
+    
+    // Better mobile form handling
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function() {
+            if (window.innerWidth <= 768) {
+                // Show loading state on mobile
+                const submitBtn = this.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                    submitBtn.disabled = true;
+                }
+            }
+        });
+    });
+    
+    // Improve mobile navigation
+    const navbarToggler = document.querySelector('.navbar-toggler');
+    if (navbarToggler) {
+        navbarToggler.addEventListener('click', function() {
+            document.body.classList.toggle('navbar-open');
+        });
+    }
+    
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.navbar') && document.body.classList.contains('navbar-open')) {
+            document.body.classList.remove('navbar-open');
+        }
+    });
+    
+    // Better mobile search experience
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput && window.innerWidth <= 768) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.form.submit();
+            }, 500); // Debounce search on mobile
+        });
+    }
+    
+    // Mobile card layout enhancements
+    if (window.innerWidth <= 768) {
+        // Add pull-to-refresh functionality
+        let startY = 0;
+        let currentY = 0;
+        let pullDistance = 0;
+        const container = document.querySelector('.mobile-cards-container');
+        
+        if (container) {
+            container.addEventListener('touchstart', function(e) {
+                if (container.scrollTop === 0) {
+                    startY = e.touches[0].clientY;
+                }
+            });
+            
+            container.addEventListener('touchmove', function(e) {
+                if (container.scrollTop === 0) {
+                    currentY = e.touches[0].clientY;
+                    pullDistance = currentY - startY;
+                    
+                    if (pullDistance > 0 && pullDistance < 100) {
+                        this.style.transform = `translateY(${pullDistance * 0.5}px)`;
+                    }
+                }
+            });
+            
+            container.addEventListener('touchend', function(e) {
+                if (pullDistance > 80) {
+                    // Trigger refresh
+                    window.location.reload();
+                } else {
+                    this.style.transform = '';
+                }
+                pullDistance = 0;
+            });
+        }
+        
+        // Add mobile-specific animations
+        const mobileCards = document.querySelectorAll('.mobile-ticket-card');
+        mobileCards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.classList.add('fade-in');
+        });
+        
+        // Mobile form improvements
+        const mobileForms = document.querySelectorAll('.modern-form form');
+        mobileForms.forEach(form => {
+            const inputs = form.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    // Scroll to input on mobile
+                    setTimeout(() => {
+                        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300);
+                });
+            });
+        });
+    }
+    
+    // Mobile gesture improvements
+    if (window.innerWidth <= 768) {
+        // Add haptic feedback for mobile interactions
+        const mobileButtons = document.querySelectorAll('.mobile-action-btn, .mobile-fab');
+        mobileButtons.forEach(button => {
+            button.addEventListener('touchstart', function() {
+                if (navigator.vibrate) {
+                    navigator.vibrate(10);
+                }
+            });
+        });
+        
+        // Improve mobile scrolling
+        const scrollContainers = document.querySelectorAll('.mobile-cards-container, .mobile-filter-content');
+        scrollContainers.forEach(container => {
+            container.style.webkitOverflowScrolling = 'touch';
+        });
+    }
+});
+
 // Initialize auto-submit for search forms
 // Remove or comment out the following line to disable real-time search for tickets
 // document.addEventListener('DOMContentLoaded', function() {
