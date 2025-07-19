@@ -1,14 +1,57 @@
 <?php
+// Load environment variables from .env file
+function loadEnv($path) {
+    if (!file_exists($path)) {
+        return false;
+    }
+    
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, '#') === 0) continue;
+        
+        list($name, $value) = explode('=', $line, 2);
+        $name = trim($name);
+        $value = trim($value);
+        
+        if (!array_key_exists($name, $_ENV)) {
+            $_ENV[$name] = $value;
+            putenv("$name=$value");
+        }
+    }
+    return true;
+}
+
+// Load .env file
+loadEnv(__DIR__ . '/../.env');
+
 // Cloud-ready database config using environment variables
 $DB_HOST = getenv('DB_HOST') ?: 'localhost';
 $DB_USER = getenv('DB_USER') ?: 'root';
 $DB_PASS = getenv('DB_PASS') ?: '';
 $DB_NAME = getenv('DB_NAME') ?: 'nissan_tickets';
 
+// Production error handling
+$is_production = getenv('APP_ENV') === 'production';
+if ($is_production) {
+    error_reporting(0);
+    ini_set('display_errors', 0);
+    ini_set('log_errors', 1);
+    ini_set('error_log', '/var/log/php_errors.log');
+} else {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+}
+
 $conn = mysqli_connect($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
 if (!$conn) {
-    die('Database connection failed: ' . mysqli_connect_error());
+    if ($is_production) {
+        error_log("Database connection failed: " . mysqli_connect_error());
+        die('Database connection failed. Please try again later.');
+    } else {
+        die('Database connection failed: ' . mysqli_connect_error());
+    }
 }
+
 // For cloud: set DB_HOST, DB_USER, DB_PASS, DB_NAME in your environment or .env file
 
 // Create database if it doesn't exist
@@ -16,7 +59,12 @@ $sql = "CREATE DATABASE IF NOT EXISTS " . $DB_NAME;
 if (mysqli_query($conn, $sql)) {
     mysqli_select_db($conn, $DB_NAME);
 } else {
-    die("Error creating database: " . mysqli_error($conn));
+    if ($is_production) {
+        error_log("Error creating database: " . mysqli_error($conn));
+        die('Database setup failed. Please contact administrator.');
+    } else {
+        die("Error creating database: " . mysqli_error($conn));
+    }
 }
 
 // Create tables if they don't exist
@@ -75,7 +123,12 @@ $tables = [
 
 foreach ($tables as $sql) {
     if (!mysqli_query($conn, $sql)) {
-        die("Error creating table: " . mysqli_error($conn));
+        if ($is_production) {
+            error_log("Error creating table: " . mysqli_error($conn));
+            die('Database setup failed. Please contact administrator.');
+        } else {
+            die("Error creating table: " . mysqli_error($conn));
+        }
     }
 }
 

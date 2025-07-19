@@ -11,9 +11,6 @@
 <body>
 <?php
 require_once 'includes/functions.php';
-if (isset($_SESSION['notification'])) {
-    echo '<pre>DEBUG: Notification in session: ' . print_r($_SESSION['notification'], true) . '</pre>';
-}
 
 if (!isLoggedIn()) {
     redirect('login.php');
