@@ -33,11 +33,12 @@ while ($row = mysqli_fetch_assoc($result)) {
     $stats['total'] += $row['count'];
 }
 
-// Get recent tickets - updated to show assigned department
-$query = "SELECT t.*, u.username as created_by, d.name as assigned_department_name 
+// Get recent tickets - updated to show assigned department and creator department
+$query = "SELECT t.*, u.username as creator_username, d_assign.name as assigned_department_name, d.name as department_name 
           FROM tickets t 
           LEFT JOIN users u ON t.created_by = u.id 
-          LEFT JOIN departments d ON t.assigned_department_id = d.id
+          LEFT JOIN departments d_assign ON t.assigned_department_id = d_assign.id
+          LEFT JOIN departments d ON t.department_id = d.id
           ORDER BY t.created_at DESC 
           LIMIT 5";
 $recent_tickets = mysqli_query($conn, $query);
@@ -171,7 +172,8 @@ setTimeout(function() {
                                         <th>Status</th>
                                         <th>Priority</th>
                                         <th>Created By</th>
-                                        <th>Assigned Department</th>
+                                        <th>Assigned To</th>
+                                        <th>Department</th>
                                         <th>Date Created</th>
                                         <th>Action</th>
                                     </tr>
@@ -216,13 +218,19 @@ setTimeout(function() {
                                             <td>
                                                 <div class="d-flex align-items-center">
                                                     <i class="fas fa-user me-2 text-muted"></i>
-                                                    <?php echo htmlspecialchars($ticket['created_by']); ?>
+                                                    <?php echo htmlspecialchars($ticket['creator_username']); ?>
                                                 </div>
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center">
                                                     <i class="fas fa-building me-2 text-muted"></i>
-                                                    <?php echo $ticket['assigned_department_name'] ? htmlspecialchars($ticket['assigned_department_name']) : '<span class="text-muted">Unassigned</span>'; ?>
+                                                    <?php echo htmlspecialchars($ticket['assigned_department_name']); ?>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-building me-2 text-muted"></i>
+                                                    <?php echo htmlspecialchars($ticket['department_name']); ?>
                                                 </div>
                                             </td>
                                             <td>
@@ -264,11 +272,15 @@ setTimeout(function() {
                                         <div class="mobile-card-meta">
                                             <div class="mobile-meta-item">
                                                 <i class="fas fa-user"></i>
-                                                <span><?php echo htmlspecialchars($ticket['created_by']); ?></span>
+                                                <span><?php echo htmlspecialchars($ticket['creator_username']); ?></span>
                                             </div>
                                             <div class="mobile-meta-item">
                                                 <i class="fas fa-building"></i>
-                                                <span><?php echo $ticket['assigned_department_name'] ? htmlspecialchars($ticket['assigned_department_name']) : 'Unassigned'; ?></span>
+                                                <span><?php echo htmlspecialchars($ticket['assigned_department_name']); ?></span>
+                                            </div>
+                                            <div class="mobile-meta-item">
+                                                <i class="fas fa-building"></i>
+                                                <span><?php echo htmlspecialchars($ticket['department_name']); ?></span>
                                             </div>
                                         </div>
                                         <div class="d-flex gap-2 flex-wrap">

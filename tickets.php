@@ -42,11 +42,12 @@ while ($row = mysqli_fetch_assoc($dept_result)) {
 //     $department = $user_department_id;
 // }
 
-// Build query - updated to include assigned_department_id
-$query = "SELECT t.*, u.username as created_by, d.name as assigned_department_name 
+// Build query - updated to use assigned_department_id (department) instead of assigned_to (user)
+$query = "SELECT t.*, u.username as creator_username, d_assign.name as assigned_department_name, d.name as department_name 
           FROM tickets t 
           LEFT JOIN users u ON t.created_by = u.id 
-          LEFT JOIN departments d ON t.assigned_department_id = d.id
+          LEFT JOIN departments d_assign ON t.assigned_department_id = d_assign.id
+          LEFT JOIN departments d ON t.department_id = d.id
           WHERE 1=1";
 
 if ($status) {
@@ -82,7 +83,7 @@ $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] :
 $offset = ($page - 1) * $tickets_per_page;
 
 // Count total tickets for pagination
-$count_query = "SELECT COUNT(*) as total FROM tickets t LEFT JOIN users u ON t.created_by = u.id LEFT JOIN departments d ON t.assigned_department_id = d.id WHERE 1=1";
+$count_query = "SELECT COUNT(*) as total FROM tickets t LEFT JOIN users u ON t.created_by = u.id LEFT JOIN departments d_assign ON t.assigned_department_id = d_assign.id LEFT JOIN departments d ON t.department_id = d.id WHERE 1=1";
 if ($status) {
     if ($status === 'completed') {
         $count_query .= " AND (t.status = 'resolved' OR t.status = 'closed')";
@@ -295,7 +296,8 @@ setTimeout(function() {
                                         <th>Status</th>
                                         <th>Priority</th>
                                         <th>Created By</th>
-                                        <th>Assigned Department</th>
+                                        <th>Assigned To</th>
+                                        <th>Department</th>
                                         <th>Date Created</th>
                                         <th>Action</th>
                                     </tr>
@@ -328,7 +330,12 @@ setTimeout(function() {
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <span class="fw-medium"><?php echo htmlspecialchars($ticket['created_by']); ?></span>
+                                                    <span class="fw-medium"><?php echo htmlspecialchars($ticket['creator_username']); ?></span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="fw-medium"><?php echo htmlspecialchars($ticket['assigned_department_name']); ?></span>
                                                 </div>
                                             </td>
                                             <td>
@@ -336,7 +343,7 @@ setTimeout(function() {
                                                     <div class="department-icon">
                                                         <i class="fas fa-building"></i>
                                                     </div>
-                                                    <span class="fw-medium"><?php echo $ticket['assigned_department_name'] ? htmlspecialchars($ticket['assigned_department_name']) : '<span class="text-muted">Unassigned</span>'; ?></span>
+                                                    <span class="fw-medium"><?php echo htmlspecialchars($ticket['department_name']); ?></span>
                                                 </div>
                                             </td>
                                             <td>
@@ -386,11 +393,15 @@ setTimeout(function() {
                                         <div class="mobile-card-meta">
                                             <div class="mobile-meta-item">
                                                 <i class="fas fa-user"></i>
-                                                <span><?php echo htmlspecialchars($ticket['created_by']); ?></span>
+                                                <span><?php echo htmlspecialchars($ticket['creator_username']); ?></span>
+                                            </div>
+                                            <div class="mobile-meta-item">
+                                                <i class="fas fa-user"></i>
+                                                <span><?php echo htmlspecialchars($ticket['assigned_department_name']); ?></span>
                                             </div>
                                             <div class="mobile-meta-item">
                                                 <i class="fas fa-building"></i>
-                                                <span><?php echo $ticket['assigned_department_name'] ? htmlspecialchars($ticket['assigned_department_name']) : 'Unassigned'; ?></span>
+                                                <span><?php echo htmlspecialchars($ticket['department_name']); ?></span>
                                             </div>
                                             <?php if (!empty($ticket['attachment'])): ?>
                                                 <div class="mobile-meta-item">
@@ -433,33 +444,15 @@ setTimeout(function() {
                             <?php endwhile; ?>
                         </div>
                     <?php else: ?>
-                        <!-- Desktop Empty State -->
-                        <div class="empty-state">
-                            <i class="fas fa-search empty-state-icon"></i>
-                            <h5 class="empty-state-title">No tickets found</h5>
-                            <p class="empty-state-description">Try adjusting your filters or create a new ticket.</p>
-                            <div class="d-flex gap-2 justify-content-center">
-                                <a href="tickets.php" class="btn btn-outline-secondary">
-                                    <i class="fas fa-undo me-1"></i>Clear Filters
-                                </a>
-                                <a href="create_ticket.php" class="btn btn-primary">
-                                    <i class="fas fa-plus me-1"></i>Create Ticket
-                                </a>
+                        <div class="empty-state text-center my-5">
+                            <div class="empty-state-icon mb-3">
+                                <i class="fas fa-search fa-2x"></i>
                             </div>
-                        </div>
-
-                        <!-- Mobile Empty State -->
-                        <div class="mobile-empty-state">
-                            <i class="fas fa-search mobile-empty-icon"></i>
-                            <h5 class="mobile-empty-title">No tickets found</h5>
-                            <p class="mobile-empty-description">Try adjusting your filters or create a new ticket.</p>
-                            <div class="mobile-empty-actions">
-                                <a href="tickets.php" class="mobile-action-btn secondary">
-                                    <i class="fas fa-undo me-1"></i>Clear Filters
-                                </a>
-                                <a href="create_ticket.php" class="mobile-action-btn primary">
-                                    <i class="fas fa-plus me-1"></i>Create Ticket
-                                </a>
+                            <div class="empty-state-title fw-bold mb-2">NO TICKETS FOUND</div>
+                            <div class="empty-state-description mb-3">Try adjusting your filters or create a new ticket.</div>
+                            <div class="empty-state-actions">
+                                <a href="tickets.php" class="btn btn-link">Clear Filters</a>
+                                <a href="create_ticket.php" class="btn btn-primary ms-2">Create Ticket</a>
                             </div>
                         </div>
                     <?php endif; ?>

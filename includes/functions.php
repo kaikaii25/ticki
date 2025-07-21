@@ -43,10 +43,11 @@ function getAllUsers() {
 function getTicketById($ticketId) {
     global $conn;
     $ticketId = sanitize($ticketId);
-    $query = "SELECT t.*, u.username as created_by, a.username as assigned_to_name 
+    $query = "SELECT t.*, u.username as creator_username, a.username as assigned_to_username, d.name as department_name 
               FROM tickets t 
               LEFT JOIN users u ON t.created_by = u.id 
               LEFT JOIN users a ON t.assigned_to = a.id 
+              LEFT JOIN departments d ON t.department_id = d.id 
               WHERE t.id = '$ticketId'";
     $result = mysqli_query($conn, $query);
     return mysqli_fetch_assoc($result);

@@ -57,6 +57,11 @@ usort($departments, function($a, $b) {
     return strlen($a['name']) - strlen($b['name']);
 });
 
+// At the top, before the form, set variables from POST if available
+$username = $_POST['username'] ?? '';
+$email = $_POST['email'] ?? '';
+$department_id = $_POST['department_id'] ?? '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCsrfToken($_POST['csrf_token'] ?? '')) {
         $error = 'Invalid CSRF token. Please refresh and try again.';
@@ -88,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          VALUES ('$username', '$email', '$hashed_password', $department_id)";
                 
                 if (mysqli_query($conn, $query)) {
-                    $_SESSION['message'] = displaySuccess('Registration successful! Please login.');
+                    setNotification('Registration successful! Please login.', 'success');
                     redirect('login.php');
                 } else {
                     $error = 'Registration failed. Please try again.';
@@ -116,18 +121,18 @@ require_once 'includes/header.php';
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(getCsrfToken()); ?>">
                         <div class="mb-4">
                             <label for="username" class="form-label">Username</label>
-                            <input type="text" class="form-control form-control-lg" id="username" name="username" required>
+                            <input type="text" class="form-control form-control-lg" id="username" name="username" value="<?php echo htmlspecialchars($username); ?>" required>
                         </div>
                         <div class="mb-4">
                             <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control form-control-lg" id="email" name="email" required>
+                            <input type="email" class="form-control form-control-lg" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required>
                         </div>
                         <div class="mb-4">
                             <label for="department_id" class="form-label">Department</label>
                             <select class="form-select form-select-lg" id="department_id" name="department_id" required>
                                 <option value="">Select Department</option>
                                 <?php foreach ($departments as $dept): ?>
-                                    <option value="<?php echo $dept['id']; ?>">
+                                    <option value="<?php echo $dept['id']; ?>" <?php echo ($department_id == $dept['id']) ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($dept['name']); ?>
                                     </option>
                                 <?php endforeach; ?>

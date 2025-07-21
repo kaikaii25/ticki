@@ -1,8 +1,8 @@
 /* NOTHING SYSTEM - Polished Design System */
 
 /* ===== TYPOGRAPHY ===== */
-body, h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', 'Segoe UI', 'Roboto', Arial, sans-serif;
+body, h1, h2, h3, h4, h5, h6, .form-control, .form-select, .btn, .navbar, .card, .table, .alert, .dropdown-menu, .modal-content {
+    font-family: 'Inter', 'Segoe UI', 'Roboto', Arial, sans-serif !important;
     line-height: 1.6;
 }
 

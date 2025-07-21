@@ -164,15 +164,18 @@ require_once 'includes/header.php';
                                     </div>
                                     <div class="mb-4">
                                         <label for="assigned_department_id" class="form-label">
-                                            <i class="fas fa-users"></i>Assign To Department
+                                            <i class="fas fa-building"></i>Assign to Department
                                         </label>
                                         <select class="form-select form-select-lg" id="assigned_department_id" name="assigned_department_id">
                                             <option value="">Unassigned (Optional)</option>
-                                            <?php foreach ($departments as $dept): ?>
-                                                <option value="<?php echo $dept['id']; ?>">
-                                                    <?php echo htmlspecialchars($dept['name']); ?>
-                                                </option>
-                                            <?php endforeach; ?>
+                                            <?php
+                                            // Get all departments for the dropdown
+                                            $departments_query = "SELECT id, name FROM departments ORDER BY name";
+                                            $departments_result = mysqli_query($conn, $departments_query);
+                                            while ($dept_row = mysqli_fetch_assoc($departments_result)) {
+                                                echo "<option value='" . htmlspecialchars($dept_row['id']) . "'>" . htmlspecialchars($dept_row['name']) . "</option>";
+                                            }
+                                            ?>
                                         </select>
                                         <small class="text-muted">Leave unassigned if you're not sure which department should handle this.</small>
                                     </div>

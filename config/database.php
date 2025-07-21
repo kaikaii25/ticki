@@ -28,7 +28,7 @@ loadEnv(__DIR__ . '/../.env');
 $DB_HOST = getenv('DB_HOST') ?: 'localhost';
 $DB_USER = getenv('DB_USER') ?: 'root';
 $DB_PASS = getenv('DB_PASS') ?: '';
-$DB_NAME = getenv('DB_NAME') ?: 'nissan_tickets';
+$DB_NAME = getenv('DB_NAME') ?: 'nothing_tickets';
 
 // Production error handling
 $is_production = getenv('APP_ENV') === 'production';
@@ -69,41 +69,45 @@ if (mysqli_query($conn, $sql)) {
 
 // Create tables if they don't exist
 $tables = [
+    // Departments table
     "CREATE TABLE IF NOT EXISTS departments (
         id INT PRIMARY KEY AUTO_INCREMENT,
-        name VARCHAR(100) NOT NULL,
+        name VARCHAR(100) NOT NULL UNIQUE,
         description TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )",
-    
+    // Users table
     "CREATE TABLE IF NOT EXISTS users (
         id INT PRIMARY KEY AUTO_INCREMENT,
-        username VARCHAR(50) UNIQUE NOT NULL,
+        username VARCHAR(50) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
-        email VARCHAR(100) UNIQUE NOT NULL,
+        email VARCHAR(100) NOT NULL UNIQUE,
         role ENUM('admin', 'user') DEFAULT 'user',
-        department_id INT,
+        department_id INT NOT NULL,
+        is_admin TINYINT(1) DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (department_id) REFERENCES departments(id)
     )",
-    
+    // Tickets table
     "CREATE TABLE IF NOT EXISTS tickets (
         id INT PRIMARY KEY AUTO_INCREMENT,
         title VARCHAR(255) NOT NULL,
         description TEXT NOT NULL,
-        status ENUM('open', 'in_progress', 'resolved', 'closed') DEFAULT 'open',
-        priority ENUM('low', 'medium', 'high') DEFAULT 'medium',
-        user_id INT,
-        assigned_to INT,
-        department_id INT,
+        status ENUM('open', 'in_progress', 'resolved', 'closed', 'on_hold') DEFAULT 'open',
+        priority ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'medium',
+        created_by INT NOT NULL,
+        department_id INT NOT NULL,
+        assigned_department_id INT DEFAULT NULL,
+        due_date DATE DEFAULT NULL,
+        closed_at TIMESTAMP NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         attachment VARCHAR(255),
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (assigned_to) REFERENCES users(id),
-        FOREIGN KEY (department_id) REFERENCES departments(id)
+        FOREIGN KEY (created_by) REFERENCES users(id),
+        FOREIGN KEY (department_id) REFERENCES departments(id),
+        FOREIGN KEY (assigned_department_id) REFERENCES departments(id)
     )",
-    
+    // Ticket comments table
     "CREATE TABLE IF NOT EXISTS ticket_comments (
         id INT PRIMARY KEY AUTO_INCREMENT,
         ticket_id INT NOT NULL,
@@ -113,7 +117,18 @@ $tables = [
         FOREIGN KEY (ticket_id) REFERENCES tickets(id),
         FOREIGN KEY (user_id) REFERENCES users(id)
     )",
-    
+    // Notifications table
+    "CREATE TABLE IF NOT EXISTS notifications (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        user_id INT NOT NULL,
+        ticket_id INT NOT NULL,
+        message TEXT NOT NULL,
+        is_read TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (ticket_id) REFERENCES tickets(id)
+    )",
+    // Canned responses table
     "CREATE TABLE IF NOT EXISTS canned_responses (
         id INT PRIMARY KEY AUTO_INCREMENT,
         title VARCHAR(100) NOT NULL,

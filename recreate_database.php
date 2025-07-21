@@ -8,13 +8,15 @@ mysqli_query($conn, "DROP TABLE IF EXISTS ticket_comments");
 mysqli_query($conn, "DROP TABLE IF EXISTS tickets");
 mysqli_query($conn, "DROP TABLE IF EXISTS users");
 mysqli_query($conn, "DROP TABLE IF EXISTS departments");
+mysqli_query($conn, "DROP TABLE IF EXISTS canned_responses");
 mysqli_query($conn, "SET FOREIGN_KEY_CHECKS = 1");
 
 // Create departments table
 $sql = "CREATE TABLE departments (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL UNIQUE,
-    description TEXT
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )";
 mysqli_query($conn, $sql);
 
@@ -26,7 +28,7 @@ $sql = "CREATE TABLE users (
     email VARCHAR(100) NOT NULL UNIQUE,
     role ENUM('admin', 'user') DEFAULT 'user',
     department_id INT NOT NULL,
-    is_admin BOOLEAN DEFAULT FALSE,
+    is_admin TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (department_id) REFERENCES departments(id)
 )";
@@ -37,13 +39,16 @@ $sql = "CREATE TABLE tickets (
     id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
-    status ENUM('open', 'in_progress', 'resolved', 'closed') DEFAULT 'open',
-    priority ENUM('low', 'medium', 'high') DEFAULT 'medium',
+    status ENUM('open', 'in_progress', 'resolved', 'closed', 'on_hold') DEFAULT 'open',
+    priority ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'medium',
     created_by INT NOT NULL,
+    department_id INT NOT NULL,
+    assigned_department_id INT DEFAULT NULL,
+    due_date DATE DEFAULT NULL,
+    closed_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    department_id INT NOT NULL,
-    assigned_department_id INT,
+    attachment VARCHAR(255),
     FOREIGN KEY (created_by) REFERENCES users(id),
     FOREIGN KEY (department_id) REFERENCES departments(id),
     FOREIGN KEY (assigned_department_id) REFERENCES departments(id)
@@ -68,10 +73,18 @@ $sql = "CREATE TABLE notifications (
     user_id INT NOT NULL,
     ticket_id INT NOT NULL,
     message TEXT NOT NULL,
-    is_read BOOLEAN DEFAULT FALSE,
+    is_read TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (ticket_id) REFERENCES tickets(id)
+)";
+mysqli_query($conn, $sql);
+
+// Create canned_responses table
+$sql = "CREATE TABLE canned_responses (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(100) NOT NULL,
+    content TEXT NOT NULL
 )";
 mysqli_query($conn, $sql);
 

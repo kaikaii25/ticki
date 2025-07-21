@@ -1,6 +1,6 @@
-# Nissan Ticketing System
+# Nothing Ticketing System
 
-A simple and easy-to-use ticketing system for Nissan, built with PHP and MySQL. This system allows users to create, manage, and track support tickets efficiently.
+A simple and easy-to-use ticketing system for Nothing, built with PHP and MySQL. This system allows users to create, manage, and track support tickets efficiently.
 
 ## Features
 
@@ -24,7 +24,7 @@ A simple and easy-to-use ticketing system for Nissan, built with PHP and MySQL. 
 ## Installation
 
 1. Clone or download this repository to your web server's document root (e.g., `htdocs` for XAMPP)
-2. Create a new MySQL database named `nissan_tickets`
+2. Create a new MySQL database named `nothing_tickets`
 3. Import the database schema (it will be created automatically when you first access the system)
 4. Configure your web server to point to the project directory
 5. Access the system through your web browser
@@ -35,7 +35,7 @@ The system uses the following default database configuration:
 - Host: localhost
 - Username: root
 - Password: (empty)
-- Database: nissan_tickets
+- Database: nothing_tickets
 
 You can modify these settings in `config/database.php` if needed.
 

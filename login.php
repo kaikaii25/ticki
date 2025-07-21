@@ -66,6 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="d-flex flex-column min-vh-100">
 <?php
 require_once 'includes/header.php';
+displayNotification(); // Show any notification set in the session
 ?>
 
 <div class="compressed-container mt-4">
